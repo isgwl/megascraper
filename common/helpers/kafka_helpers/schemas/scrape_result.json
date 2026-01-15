@@ -1,0 +1,12 @@
+{
+  "type": "object",
+  "properties": {
+    "url": {
+      "type": "string"
+    },
+    "data": {
+      "type": ["object","null"]
+    },
+    "new_links": { "type": "array", "items":{"type":"string"} }
+  }
+}

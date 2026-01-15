@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "common-helpers"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "confluent-kafka",
+  "psycopg[binary]",
+  "psycopg[pool]",
+  "jsonschema"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["kafka_helpers","postgres_helpers"]

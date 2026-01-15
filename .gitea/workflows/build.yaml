@@ -1,0 +1,77 @@
+name: Build & push services
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ${{ vars.REGISTRY }}
+      IMAGE_REPO: ${{ github.repository }} # owner/repo
+      SHA: ${{ github.sha }}
+      REF: ${{ github.ref }}
+      REF_NAME: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to registry
+        run: |
+          if [ -z "${REGISTRY:-}" ]; then
+            echo "REGISTRY is not set. Create a repo variable REGISTRY (e.g. gitea.example.com)."
+            exit 1
+          fi
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login "$REGISTRY" \
+            -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
+
+      - name: Build & push all services
+        run: |
+          #!/bin/sh
+          set -eu
+
+          SHORT_SHA="$(echo "$SHA" | cut -c1-7)"
+
+          IS_TAG=0
+          TAG_NAME=""
+          case "$REF" in
+            refs/tags/*)
+              IS_TAG=1
+              TAG_NAME="$(echo "$REF" | sed 's#refs/tags/##')"
+              ;;
+          esac
+
+          for dir in services/*; do
+            [ -d "$dir" ] || continue
+            [ -f "$dir/Dockerfile" ] || continue
+
+            svc="$(basename "$dir")"
+
+            # Gitea registry naming convention is {registry}/{owner}/{image}
+            # Here image becomes "repo/<service>" which is allowed (nested names). 
+            image="$REGISTRY/$IMAGE_REPO/$svc"
+
+            echo "==> Building $image"
+            # Build context is repo root (.) so Dockerfiles can COPY from /common if needed.
+            docker build -f "$dir/Dockerfile" -t "$image:$SHORT_SHA" .
+
+            echo "==> Pushing $image:$SHORT_SHA"
+            docker push "$image:$SHORT_SHA"
+
+            if [ "$REF_NAME" = "main" ]; then
+              echo "==> Tagging/pushing latest"
+              docker tag "$image:$SHORT_SHA" "$image:latest"
+              docker push "$image:latest"
+            fi
+
+            if [ "$IS_TAG" -eq 1 ]; then
+              echo "==> Tagging/pushing $TAG_NAME"
+              docker tag "$image:$SHORT_SHA" "$image:$TAG_NAME"
+              docker push "$image:$TAG_NAME"
+            fi
+          done
