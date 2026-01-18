@@ -25,11 +25,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate
-        run:
-          docker login --username ${{vars.USERNAME}} --password ${{secrets.PAT}} ${{vars.REGISTRY}}
-
-
+      - name: Docker login
+        run: |
+          echo "${{ secrets.PAT }}" | docker login "${{ vars.REGISTRY }}" \
+            --username "${{ vars.USERNAME }}" \
+            --password-stdin
 
       - name: Build ${{ matrix.service }}
         env:
