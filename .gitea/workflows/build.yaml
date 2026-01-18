@@ -11,6 +11,7 @@ on:
       - "services/**/Dockerfile"
       - "services/**"
       - "common/**"
+  workflow_dispatch:
 
 jobs:
   build:
