@@ -26,7 +26,7 @@ jobs:
 
       - name: Authenticate
         run:
-          docker login --username ${{vars.USERNAME}} --password ${{secrets.PAT}} ${{}} http://k3s-server.lan:30123
+          docker login --username ${{vars.USERNAME}} --password ${{secrets.PAT}} ${{vars.REGISTRY}}
 
 
 
