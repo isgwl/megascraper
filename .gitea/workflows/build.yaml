@@ -24,6 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Authenticate
+        run:
+          docker login --username ${{vars.USERNAME}} --password ${{secrets.PAT}} ${{}} http://k3s-server.lan:30123
+
+
+
       - name: Build ${{ matrix.service }}
         env:
           DOCKER_BUILDKIT: "1"
